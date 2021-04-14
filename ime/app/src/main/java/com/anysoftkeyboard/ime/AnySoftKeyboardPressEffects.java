@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -41,8 +42,8 @@ public abstract class AnySoftKeyboardPressEffects extends AnySoftKeyboardClipboa
     private float mCustomSoundVolume = SILENT;
 
     private Vibrator mVibrator;
-    private int mVibrationDuration;
-    private int mVibrationDurationForLongPress;
+    private Object mVibrationEffect; // will be Integer if API < 26; else VibrationEffect
+    private Object mVibrationEffectForLongPress;
     @NonNull private KeyPreviewsController mKeyPreviewController = new NullKeyPreviewsManager();
 
     @NonNull private final PublishSubject<Long> mKeyPreviewSubject = PublishSubject.create();
@@ -125,32 +126,46 @@ public abstract class AnySoftKeyboardPressEffects extends AnySoftKeyboardClipboa
                                         getApplicationContext(),
                                         R.string.settings_key_night_mode_vibration_control,
                                         R.bool.settings_default_true),
+                                prefs().getBoolean(
+                                        R.string.settings_key_use_system_vibration,
+                                        R.bool.settings_default_use_system_vibration)
+                                        .asObservable(),
                                 prefs().getInteger(
                                                 R.string
                                                         .settings_key_vibrate_on_key_press_duration_int,
                                                 R.integer
                                                         .settings_default_vibrate_on_key_press_duration_int)
                                         .asObservable(),
-                                (powerState, nightState, vibrationDuration) ->
-                                        powerState ? 0 : nightState ? 0 : vibrationDuration)
+                                (powerState, nightState, systemVibration, vibrationDuration) ->
+                                        powerState ? 0 : nightState ? 0 : getVibrationEffect(systemVibration, vibrationDuration, false))
                         .subscribe(
                                 value -> {
-                                    mVibrationDuration = value;
+                                    // don't do the demo when the preferences are first read
+                                    boolean skipDemo = mVibrationEffect == null;
+                                    mVibrationEffect = value;
                                     // demo
-                                    performKeyVibration(KeyCodes.SPACE, false);
+                                    if (!skipDemo) performKeyVibration(KeyCodes.SPACE, false);
                                 },
                                 t -> Logger.w(TAG, t, "Failed to get vibrate duration")));
 
         addDisposable(
-                prefs().getBoolean(
+                Observable.combineLatest(
+                        prefs().getBoolean(
+                                R.string.settings_key_use_system_vibration,
+                                R.bool.settings_default_use_system_vibration)
+                                .asObservable(),
+                        prefs().getBoolean(
                                 R.string.settings_key_vibrate_on_long_press,
                                 R.bool.settings_default_vibrate_on_long_press)
-                        .asObservable()
+                                .asObservable(),
+                        (systemVibration, shouldVibrate) ->
+                                getVibrationEffect(systemVibration, shouldVibrate ? 7 : 0, true))
                         .subscribe(
                                 value -> {
-                                    mVibrationDurationForLongPress = value ? 7 : 0;
+                                    boolean skipDemo = mVibrationEffectForLongPress == null;
+                                    mVibrationEffectForLongPress = value;
                                     // demo
-                                    performKeyVibration(KeyCodes.SPACE, true);
+                                    if (!skipDemo) performKeyVibration(KeyCodes.SPACE, true);
                                 },
                                 t -> Logger.w(TAG, t, "Failed to get vibrate duration")));
 
@@ -268,17 +283,32 @@ public abstract class AnySoftKeyboardPressEffects extends AnySoftKeyboardClipboa
     }
 
     private void performKeyVibration(int primaryCode, boolean longPress) {
-        final int vibrationDuration =
-                longPress ? mVibrationDurationForLongPress : mVibrationDuration;
-        if (vibrationDuration > 0 && primaryCode != 0) {
-            try {
-                mVibrator.vibrate(vibrationDuration);
-            } catch (Exception e) {
-                Logger.w(TAG, "Failed to interact with vibrator! Disabling for now.");
-                mVibrationDuration = 0;
-                mVibrationDurationForLongPress = 0;
+        final Object vibrationEffect = longPress ? mVibrationEffectForLongPress : mVibrationEffect;
+        try {
+            if (primaryCode != 0) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !(vibrationEffect instanceof Integer)) {
+                    mVibrator.vibrate((VibrationEffect) vibrationEffect);
+                } else if ((Integer) vibrationEffect > 0) {
+                    mVibrator.vibrate((Integer) vibrationEffect);
+                }
             }
+        } catch (Exception e) {
+            Logger.w(TAG, "Failed to interact with vibrator! Disabling for now.");
+            mVibrationEffect = 0;
+            mVibrationEffectForLongPress = 0;
         }
+    }
+
+    @NonNull
+    private Object getVibrationEffect(boolean systemVibration, int vibrationDuration, boolean longPress) {
+        if (vibrationDuration == 0) return 0;
+        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && systemVibration) {
+                return VibrationEffect.createPredefined(longPress ? VibrationEffect.EFFECT_HEAVY_CLICK : VibrationEffect.EFFECT_CLICK);
+            } else {
+                return VibrationEffect.createOneShot(vibrationDuration, VibrationEffect.DEFAULT_AMPLITUDE);
+            }
+        } else return vibrationDuration;
     }
 
     @VisibleForTesting
