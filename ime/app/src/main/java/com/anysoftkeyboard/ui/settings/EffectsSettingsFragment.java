@@ -54,8 +54,8 @@ public class EffectsSettingsFragment extends PreferenceFragmentCompat {
                                             TransitionExperiences.DEEPER_EXPERIENCE_TRANSITION);
                             return true;
                         });
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            // Android earlier than Q does not support predefined vibrations
+        if (Build.VERSION.SDK_INT < 29) {
+            // Android earlier than 29 does not support predefined vibrations
             Preference svPref = findPreference(getText(R.string.settings_key_use_system_vibration));
             svPref.setVisible(false);
             svPref.setSelectable(false);
