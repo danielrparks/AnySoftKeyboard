@@ -20,7 +20,9 @@ import com.anysoftkeyboard.devicespecific.DeviceSpecificV15;
 import com.anysoftkeyboard.devicespecific.DeviceSpecificV16;
 import com.anysoftkeyboard.devicespecific.DeviceSpecificV19;
 import com.anysoftkeyboard.devicespecific.DeviceSpecificV24;
+import com.anysoftkeyboard.devicespecific.DeviceSpecificV26;
 import com.anysoftkeyboard.devicespecific.DeviceSpecificV28;
+import com.anysoftkeyboard.devicespecific.DeviceSpecificV29;
 import com.anysoftkeyboard.dictionaries.BTreeDictionary;
 import com.anysoftkeyboard.dictionaries.DictionaryContentObserver;
 import com.anysoftkeyboard.dictionaries.DictionaryContentObserverAPI16;
@@ -63,11 +65,11 @@ public abstract class AnyApplicationDeviceSpecificAllSdkTest {
                     DeviceSpecificV19.class,
                     DeviceSpecificV24.class,
                     DeviceSpecificV24.class,
-                    DeviceSpecificV24.class,
-                    DeviceSpecificV24.class,
+                    DeviceSpecificV26.class,
+                    DeviceSpecificV26.class,
                     DeviceSpecificV28.class,
-                    DeviceSpecificV28.class,
-                    DeviceSpecificV28.class); // 30
+                    DeviceSpecificV29.class,
+                    DeviceSpecificV29.class); // 30
 
     private final List<Class<? extends Clipboard>> mExpectedClipboardClass =
             Arrays.asList(
