@@ -7,6 +7,7 @@ import static org.robolectric.annotation.Config.OLDEST_SDK;
 import android.app.Application;
 import android.database.ContentObserver;
 import android.os.Build;
+import android.os.Vibrator;
 import android.view.GestureDetector;
 import com.anysoftkeyboard.AnySoftKeyboardRobolectricTestRunner;
 import com.anysoftkeyboard.devicespecific.AskOnGestureListener;
@@ -23,6 +24,10 @@ import com.anysoftkeyboard.devicespecific.DeviceSpecificV24;
 import com.anysoftkeyboard.devicespecific.DeviceSpecificV26;
 import com.anysoftkeyboard.devicespecific.DeviceSpecificV28;
 import com.anysoftkeyboard.devicespecific.DeviceSpecificV29;
+import com.anysoftkeyboard.devicespecific.PressVibrator;
+import com.anysoftkeyboard.devicespecific.PressVibratorV1;
+import com.anysoftkeyboard.devicespecific.PressVibratorV26;
+import com.anysoftkeyboard.devicespecific.PressVibratorV29;
 import com.anysoftkeyboard.dictionaries.BTreeDictionary;
 import com.anysoftkeyboard.dictionaries.DictionaryContentObserver;
 import com.anysoftkeyboard.dictionaries.DictionaryContentObserverAPI16;
@@ -174,6 +179,40 @@ public abstract class AnyApplicationDeviceSpecificAllSdkTest {
                     AskV19GestureDetector.class,
                     AskV19GestureDetector.class); // 30
 
+    private final List<Class<? extends PressVibrator>> mExpectedPressVibratorClass =
+            Arrays.asList(
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV1.class,
+                    PressVibratorV26.class,
+                    PressVibratorV26.class,
+                    PressVibratorV26.class,
+                    PressVibratorV29.class,
+                    PressVibratorV29.class);
+
     void testCreateDeviceSpecificImplementationImpl() {
         if (Build.VERSION.SDK_INT > 100) return; // FUTURE?
 
@@ -205,6 +244,13 @@ public abstract class AnyApplicationDeviceSpecificAllSdkTest {
         Assert.assertSame(
                 mExpectedGestureDetectorClass.get(Build.VERSION.SDK_INT),
                 gestureDetector.getClass());
+
+        final PressVibrator pressVibrator =
+                deviceSpecific.createPressVibrator(Mockito.mock(Vibrator.class));
+        Assert.assertNotNull(pressVibrator);
+        Assert.assertSame(
+                mExpectedPressVibratorClass.get(Build.VERSION.SDK_INT),
+                pressVibrator.getClass());
     }
 
     public static class AnyApplicationDeviceSpecificAllSdkTest1
